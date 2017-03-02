@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
     private final String BANKCOMM_GET_CARD_LIST = "sac/user/cardList.html";
     private final String BANKCOMM_INTEGRATION_INFO = "member/member/financial/billing/integrationInfo.json";
     private final String BANKCOMM_BALANCE_QRY = "member/member/service/billing/balanceQry.html"; // 额度
+    private final String BANKCOMM_LIMIT_QRY = "member/member/limit/info.json";
     private final String BANKCOMM_BILLING_INFO_QRY = "member/member/service/billing/billingInfoQry.html"; // 账单
     private final String BANKCOMM_POINT_INFO_QRY = "member/member/service/billing/pointInfoQry.html"; // 积分
     private final String BANKCOMM_FINISHED = "member/member/service/billing/finished.html";
@@ -325,7 +326,8 @@ public class MainActivity extends AppCompatActivity {
                     String cardNo =(String) msg.obj;
                     try {
                         cardNo = URLEncoder.encode(cardNo,"utf-8");
-                        task21.execute(BANKCOMM_BALANCE_QRY,cardNo);
+                        // task21.execute(BANKCOMM_BALANCE_QRY,cardNo);
+                        task21.execute(BANKCOMM_LIMIT_QRY,cardNo);
                         task23.execute(BANKCOMM_BILLING_INFO_QRY,cardNo);
                         task24.execute(BANKCOMM_POINT_INFO_QRY,cardNo);
                         // task25.execute(BANKCOMM_FINISHED,cardNo,"20170117");
@@ -490,6 +492,7 @@ public class MainActivity extends AppCompatActivity {
                 case BANKCOMM_BALANCE_QRY:
                 case BANKCOMM_BILLING_INFO_QRY:
                 case BANKCOMM_POINT_INFO_QRY:
+                case BANKCOMM_LIMIT_QRY:
                     requestUrl = bankcomm_basic_url + currentActionName + "?cardNo=" + params[1];
                     break;
                 case BANKCOMM_BILLING_DETIAL:
@@ -552,6 +555,19 @@ public class MainActivity extends AppCompatActivity {
                         handler.sendMessage(msg);
                         break;
                     }
+                    break;
+                case BANKCOMM_LIMIT_QRY:
+                    String limitMsg = "未能查到信用额度信息";
+                    try {
+                        JSONObject jsonObject = new JSONObject(s);
+                        limitMsg = "（可用）: " + jsonObject.optString("avacrdlmt") + " (总)： " + jsonObject.optString("crdLmt");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Message msg33 = Message.obtain();
+                    msg33.what = MSG_UPDATE_LIMIT_TEXT;
+                    msg33.obj =  limitMsg;
+                    handler.sendMessage(msg33);
                     break;
                 case BANKCOMM_FINISHED:
                     break;

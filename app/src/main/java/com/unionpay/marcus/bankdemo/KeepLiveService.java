@@ -16,6 +16,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +28,8 @@ import java.util.TimerTask;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
 
 public class KeepLiveService extends Service {
     private static final String TAG = "KeepLiveService";
@@ -59,6 +63,31 @@ public class KeepLiveService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
+    private static TrustManager myX509TrustManager = new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            Log.d("X509TrustManager" , "checkClientTrusted()");
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            Log.d("X509TrustManager" , "checkServerTrusted()");
+            X509Certificate certificate = chain[0];
+            X500Principal issuerPrincipal = certificate.getIssuerX500Principal();
+            Log.d("X509TrustManager" , "issuer name :" + issuerPrincipal.getName());
+            X500Principal subjectPrincipal = certificate.getSubjectX500Principal();
+            Log.d("X509TrustManager" , "subject name :" + subjectPrincipal.getName());
+
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            Log.d("X509TrustManager" , "getAcceptedIssuers()");
+            return null;
+        }
+    };
+
     public String sendRequest(String url, String method, JSONObject params){
         try {
             Log.e(TAG, "url: " + url);
@@ -72,21 +101,21 @@ public class KeepLiveService extends Service {
             }
 
             SSLContext sslcontext = SSLContext.getInstance("TLS");
-            // sslcontext.init(null, new TrustManager[]{myX509TrustManager}, null);
+            sslcontext.init(null, new TrustManager[]{myX509TrustManager}, null);
             URL mReqUrl = new URL(url);
             URLConnection urlConnection = mReqUrl.openConnection();
-            HttpURLConnection conn = (HttpURLConnection) urlConnection;
-            // HttpsURLConnection conn = (HttpsURLConnection)  urlConnection;
+            // HttpURLConnection conn = (HttpURLConnection) urlConnection;
+            HttpsURLConnection conn = (HttpsURLConnection)  urlConnection;
 
             //设置套接工厂
-            // conn.setSSLSocketFactory(sslcontext.getSocketFactory());
+            conn.setSSLSocketFactory(sslcontext.getSocketFactory());
             // set request Method
-            // conn.setRequestMethod(method);
+            conn.setRequestMethod(method);
 
             // set request CooKie
             String cookies = CookieManager.getInstance().getCookie(url);
             Log.d(TAG,"Request Cookie :" + cookies);
-            // conn.setRequestProperty("Cookie",cookies);
+            conn.setRequestProperty("Cookie",cookies);
 
             if(method.equalsIgnoreCase("post")){
                 // set request Body
