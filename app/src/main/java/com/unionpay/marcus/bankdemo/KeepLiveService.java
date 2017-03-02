@@ -172,4 +172,16 @@ public class KeepLiveService extends Service {
         return null;
 
     }
+
+    @Override
+    public void onDestroy() {
+        Log.e(TAG,"********************** onDestroy ******************");
+        if(null != timer){
+            timer.cancel();
+            timer = null;
+        }
+        Intent sevice = new Intent(this, KeepLiveService.class);
+        this.startService(sevice);
+        super.onDestroy();
+    }
 }

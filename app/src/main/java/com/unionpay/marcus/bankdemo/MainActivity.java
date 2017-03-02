@@ -579,7 +579,7 @@ public class MainActivity extends AppCompatActivity {
                         if(bankCommCardList.contains("none")){
                             bankCommCardList.clear();
                         }
-                        bankCommCardList.add("none");
+                        // bankCommCardList.add("none");
                         Pattern pattern = Pattern.compile("[0-9]{4} \\*{4} \\*{4} [0-9]{4}");
                         Matcher matcher1 = pattern.matcher(s);
                         while (matcher1.find()) {
