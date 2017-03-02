@@ -28,6 +28,10 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.DataOutputStream;
 import java.io.InputStream;
@@ -142,7 +146,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Toast.makeText(mContext, bankCommCardList.get(position),Toast.LENGTH_SHORT).show();
-                if(!"none".equalsIgnoreCase(bankCommCardList.get(position)));
+                String selectedCardNo = bankCommCardList.get(position);
+                if( null != selectedCardNo && position!=0);
                 {
                     Message msg  = Message.obtain();
                     msg.what = MSG_BANKCOMM_DO_ALL_REQUEST;
@@ -218,12 +223,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-//                if (url.contains("index.html"))
-//                {
-//                    Log.e("test", "shouldInterceptRequest: " + url);
-//                    handler.sendEmptyMessage(MSG_HIDE_WEB_VIEW);
-//                    handler.sendEmptyMessage(MSG_CMBCHINA_DO_ALL_REQUEST);
-//                }
+                if (url.contains("index.html"))
+                {
+                    Log.e("test", "shouldInterceptRequest: " + url);
+                    handler.sendEmptyMessage(MSG_HIDE_WEB_VIEW);
+                    // handler.sendEmptyMessage(MSG_CMBCHINA_DO_ALL_REQUEST); for cmbchina
+                    handler.sendEmptyMessage(MSG_BANKCOMM_DO_ALL_REQUEST);
+                }
 
                 return super.shouldInterceptRequest(view, url);
             }
@@ -316,8 +322,6 @@ public class MainActivity extends AppCompatActivity {
                     BankCommTask task24 = new BankCommTask();
                     BankCommTask task25 = new BankCommTask();
                     BankCommTask task26 = new BankCommTask();
-                    // task21.execute(BANKCOMM_GET_CARD_LIST);
-                    // String cardNo = "6222%20****%20****%204079";
                     String cardNo =(String) msg.obj;
                     try {
                         cardNo = URLEncoder.encode(cardNo,"utf-8");
@@ -505,23 +509,35 @@ public class MainActivity extends AppCompatActivity {
 
                     break;
                 case BANKCOMM_BILLING_INFO_QRY:
+                    Document doc = Jsoup.parse(s);//解析HTML字符串返回一个Document实现
+                    Elements liSet = doc.select("li");//查找第一个a元素
+                    String billMsg = "没有查到账单信息";
+                    if (liSet.size()>0){
+                        billMsg = "";
+                        for(Element element : liSet){
+                            billMsg = billMsg + element.text() + "\r\n";
+                        }
+                    }
+
                     Message msg2 = Message.obtain();
                     msg2.what = MSG_UPDATE_BILL_TEXT;
-                    msg2.obj = s;
+                    msg2.obj = billMsg;
                     handler.sendMessage(msg2);
                     break;
                 case BANKCOMM_POINT_INFO_QRY:
                     Pattern pattern1 = Pattern.compile("[0-9]+分");
                     Matcher matcher = pattern1.matcher(s);
+                    String pointMsg = "未查到您的积分信息";
                     while (matcher.find()) {
                         Log.d(TAG,"groupCount:" + String.valueOf(matcher.groupCount()));
-                        String tmp = matcher.group();
-                        Log.d(TAG,"group" + tmp);
-                        Message msg = Message.obtain();
-                        msg.what = MSG_UPDATE_BONUS_TEXT;
-                        msg.obj = tmp;
-                        handler.sendMessage(msg);
+                        pointMsg = matcher.group();
+                        Log.d(TAG,"group" + pointMsg);
+                        break;
                     }
+                    Message msg3 = Message.obtain();
+                    msg3.what = MSG_UPDATE_BONUS_TEXT;
+                    msg3.obj = pointMsg;
+                    handler.sendMessage(msg3);
                     break;
                 case BANKCOMM_BALANCE_QRY:
                     Pattern pattern2 = Pattern.compile("￥[0-9]+.[0-9]+");
