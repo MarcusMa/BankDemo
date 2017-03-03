@@ -58,7 +58,7 @@ public class KeepLiveService extends Service {
         }
         if(null == timer){
             timer = new Timer();
-            timer.schedule(task,0,2000);
+            timer.schedule(task,1000,10000);
         }
         return super.onStartCommand(intent, flags, startId);
     }

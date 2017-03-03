@@ -21,7 +21,7 @@
         <service
             android:name=".KeepLiveService"
             android:enabled="true"
-            android:exported="false"></service>
+            android:exported="false" />
     </application>
 
 </manifest>

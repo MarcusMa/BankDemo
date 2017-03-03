@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private final int MSG_HIDE_WEB_VIEW = 4;
     private final int MSG_SHOW_WEB_VIEW = 5;
     private final int MSG_UPDATE_VALID_CODE = 6;
+    private final int MSG_START_KEEP_LIVE_SERVICE = 7;
 
     private final int MSG_CMBCHINA_DO_ALL_REQUEST = 31;
     private final int MSG_CMBCHINA_DO_LOGIN = 32;
@@ -214,7 +215,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Log.e("test", "shouldOverrideUrlLoading: " + url);
-                // handler.sendEmptyMessage(MSG_HIDE_WEB_VIEW);
+                handler.sendEmptyMessage(MSG_HIDE_WEB_VIEW);
+                handler.sendEmptyMessageDelayed(MSG_BANKCOMM_DO_BILLING_DETIAL_REQUEST,1000);
                 // handler.sendEmptyMessage(MSG_CMBCHINA_DO_ALL_REQUEST); // for cmbchina
                 //return false;
                 // return super.shouldOverrideUrlLoading(view, cmbchina_url);
@@ -224,12 +226,14 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                if (url.contains("index.html"))
+                if (url.contains("main.html"))
                 {
                     Log.e("test", "shouldInterceptRequest: " + url);
                     handler.sendEmptyMessage(MSG_HIDE_WEB_VIEW);
+                    handler.sendEmptyMessage(MSG_START_KEEP_LIVE_SERVICE);
                     // handler.sendEmptyMessage(MSG_CMBCHINA_DO_ALL_REQUEST); for cmbchina
-                    handler.sendEmptyMessage(MSG_BANKCOMM_DO_ALL_REQUEST);
+                    handler.sendEmptyMessage(MSG_BANKCOMM_DO_BILLING_DETIAL_REQUEST);
+                    // handler.sendEmptyMessage(MSG_BANKCOMM_DO_ALL_REQUEST);
                 }
 
                 return super.shouldInterceptRequest(view, url);
@@ -265,11 +269,6 @@ public class MainActivity extends AppCompatActivity {
         else {
             handler.sendEmptyMessage(MSG_SHOW_WEB_VIEW);
         }
-
-        /** start keep live service **/
-        Intent intent = new Intent(this,KeepLiveService.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startService(intent);
 
     }
     private Handler handler = new Handler(){
@@ -312,6 +311,12 @@ public class MainActivity extends AppCompatActivity {
                 case MSG_HIDE_WEB_VIEW:
                     mWebView.setVisibility(View.GONE);
                     break;
+                case MSG_START_KEEP_LIVE_SERVICE:
+                    /** start keep live service **/
+                    Intent intent = new Intent(mContext,KeepLiveService.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startService(intent);
+                    break;
                 case MSG_SHOW_WEB_VIEW:
                     mWebView.setVisibility(View.VISIBLE);
                     // mWebView.loadUrl(cmbchina_url); // for cmbchina
@@ -324,15 +329,17 @@ public class MainActivity extends AppCompatActivity {
                     BankCommTask task25 = new BankCommTask();
                     BankCommTask task26 = new BankCommTask();
                     String cardNo =(String) msg.obj;
-                    try {
-                        cardNo = URLEncoder.encode(cardNo,"utf-8");
-                        // task21.execute(BANKCOMM_BALANCE_QRY,cardNo);
-                        task21.execute(BANKCOMM_LIMIT_QRY,cardNo);
-                        task23.execute(BANKCOMM_BILLING_INFO_QRY,cardNo);
-                        task24.execute(BANKCOMM_POINT_INFO_QRY,cardNo);
-                        // task25.execute(BANKCOMM_FINISHED,cardNo,"20170117");
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
+                    if(null != cardNo){
+                        try {
+                            cardNo = URLEncoder.encode(cardNo,"utf-8");
+                            // task21.execute(BANKCOMM_BALANCE_QRY,cardNo);
+                            task21.execute(BANKCOMM_LIMIT_QRY,cardNo);
+                            task23.execute(BANKCOMM_BILLING_INFO_QRY,cardNo);
+                            task24.execute(BANKCOMM_POINT_INFO_QRY,cardNo);
+                            // task25.execute(BANKCOMM_FINISHED,cardNo,"20170117");
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
                     }
                     break;
                 case MSG_BANKCOMM_DO_BILLING_DETIAL_REQUEST:
@@ -591,6 +598,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         handler.sendEmptyMessage(MSG_BANKCOMM_UPDATE_CARD_SELECT_LIST);
+                        handler.sendEmptyMessage(MSG_START_KEEP_LIVE_SERVICE);
                     }
                     break;
                 default:break;
